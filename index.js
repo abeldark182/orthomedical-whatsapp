@@ -57,7 +57,7 @@ async function getOdooStock(productQuery) {
     });
 }
 
-// NUEVO: LÓGICA PARA VISUALIZAR MENSAJES EN ODOO (MÓDULO CONVERSACIONES)
+// LÓGICA PARA VISUALIZAR MENSAJES EN ODOO (MÓDULO CONVERSACIONES)
 async function logMessageToOdoo(phone, text, senderName) {
     return new Promise((resolve) => {
         clientCommon.methodCall('authenticate', [db, username, password, {}], (err, uid) => {
@@ -94,7 +94,7 @@ async function logMessageToOdoo(phone, text, senderName) {
     });
 }
 
-// --- GEMINI LÓGICA (Actualizado a v20 de WhatsApp) ---
+// --- GEMINI LÓGICA ---
 async function getGeminiResponse(userMessage, stockInfo) {
     const systemPrompt = `Eres el asistente virtual experto de Orthomedical A&R S.A.C. ... (mantén tu prompt) ... Info ERP: [${stockInfo}]`;
     try {
@@ -109,16 +109,18 @@ async function getGeminiResponse(userMessage, stockInfo) {
     }
 }
 
+// MODIFICACIÓN CLAVE PARA PRUEBAS: Actualizada a v25.0
 async function sendWhatsApp(to, text) {
     try {
         await axios({
             method: 'POST',
-            url: `https://graph.facebook.com/v20.0/${WHATSAPP_PHONE_ID}/messages`, // CORRECCIÓN: Actualizado a v20.0
+            url: `https://graph.facebook.com/v25.0/${WHATSAPP_PHONE_ID}/messages`, // CORRECCIÓN AQUÍ
             data: { messaging_product: "whatsapp", to: to, text: { body: text } },
             headers: { "Authorization": `Bearer ${WHATSAPP_TOKEN}`, "Content-Type": "application/json" }
         });
+        console.log(`Mensaje enviado exitosamente a ${to}`);
     } catch (error) {
-        console.error("Error API:", error.response?.data || error);
+        console.error("Error API:", error.response ? JSON.stringify(error.response.data) : error.message);
     }
 }
 
@@ -142,6 +144,8 @@ app.post('/webhook', async (req, res) => {
                 const from = msg.from;
                 const text = msg.text.body;
                 
+                console.log(`Webhook recibido de ${from}: ${text}`);
+
                 // 1. Guardar mensaje del cliente en Odoo
                 await logMessageToOdoo(from, text, "Cliente");
 
@@ -161,4 +165,4 @@ app.post('/webhook', async (req, res) => {
     }
 });
 
-app.listen(port, () => console.log(`Servidor en puerto ${port}`));
+app.listen(port, () => console.log(`Servidor de Orthomedical escuchando en el puerto ${port}`));
